@@ -1,57 +1,116 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+  Dimensions,
+  Platform
+} from 'react-native';
 import { supabase } from '../../supabaseClient';
-import { scale, moderateScale, verticalScale } from 'react-native-size-matters';
+
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+
+// Responsive scaling function
+const scale = (size) => {
+  const baseWidth = 375; // iPhone X width as base
+  const ratio = screenWidth / baseWidth;
+  const maxWidth = 400; // Maximum width for web
+
+  if (Platform.OS === 'web' && screenWidth > maxWidth) {
+    return size * (maxWidth / baseWidth);
+  }
+
+  return size * ratio;
+};
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    if (error) alert(error.message);
-    else navigation.navigate('Home'); // Replace 'Home' with your home screen
-  };
+    if (!email.trim() || !password.trim()) {
+      Alert.alert('Error', 'Please fill in all fields');
+      return;
+    }
 
-  const handleGoogleLogin = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-    });
-    if (error) alert(error.message);
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+
+      if (error) {
+        Alert.alert('Login Error', error.message);
+      } else {
+        Alert.alert('Success', 'Login successful!', [
+          { text: 'OK', onPress: () => navigation.navigate('Home') }
+        ]);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'An unexpected error occurred');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>QR Code Generator</Text>
-      <Text style={styles.welcome}>Welcome back</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        autoCapitalize="none"
-        keyboardType="email-address"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-      <Text style={styles.forgot}>Forgot password?</Text>
-      <TouchableOpacity style={styles.button} onPress={handleLogin}>
-        <Text style={styles.buttonText}>Log In</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.googleButton} onPress={handleGoogleLogin}>
-        <Text style={styles.googleButtonText}>Sign in with Google</Text>
-      </TouchableOpacity>
-      <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-        <Text style={styles.signup}>Don't have an account? Sign up</Text>
-      </TouchableOpacity>
+      <View style={styles.content}>
+        <Text style={styles.title}>QRush Code Generator</Text>
+        <Text style={styles.welcome}>Welcome back</Text>
+
+        <View style={styles.formContainer}>
+          <TextInput
+            style={styles.input}
+            placeholder="Email"
+            placeholderTextColor="#888"
+            value={email}
+            onChangeText={setEmail}
+            autoCapitalize="none"
+            keyboardType="email-address"
+            editable={!loading}
+          />
+
+          <TextInput
+            style={styles.input}
+            placeholder="Password"
+            placeholderTextColor="#888"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            editable={!loading}
+          />
+
+          <TouchableOpacity style={styles.forgotContainer}>
+            <Text style={styles.forgotText}>Forgot password?</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.loginButton, loading && styles.buttonDisabled]}
+            onPress={handleLogin}
+            disabled={loading}
+          >
+            <Text style={styles.loginButtonText}>
+              {loading ? 'Logging in...' : 'Log In'}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Register')}
+            disabled={loading}
+          >
+            <Text style={styles.signupText}>
+              <Text style={styles.signupTextGray}>Don't have an account? </Text>
+              <Text style={styles.signupTextLink}>Sign up</Text>
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
     </View>
   );
 }
@@ -59,63 +118,76 @@ export default function LoginScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a1a',
-    padding: moderateScale(20),
+    backgroundColor: '#1e1e1e',
     justifyContent: 'center',
+    alignItems: 'center',
+  },
+  content: {
+    width: '100%',
+    maxWidth: Platform.OS === 'web' ? 400 : '90%',
+    paddingHorizontal: scale(20),
   },
   title: {
-    fontSize: scale(24),
-    color: '#fff',
+    fontSize: scale(28),
+    fontWeight: '600',
+    color: '#ffffff',
     textAlign: 'center',
-    marginBottom: verticalScale(20),
+    marginBottom: scale(40),
   },
   welcome: {
-    fontSize: scale(18),
-    color: '#fff',
+    fontSize: scale(24),
+    fontWeight: '500',
+    color: '#ffffff',
     textAlign: 'center',
-    marginBottom: verticalScale(30),
+    marginBottom: scale(40),
+  },
+  formContainer: {
+    width: '100%',
   },
   input: {
-    height: verticalScale(50),
-    backgroundColor: '#333',
-    borderRadius: moderateScale(5),
-    marginBottom: verticalScale(15),
-    paddingHorizontal: moderateScale(15),
-    color: '#fff',
+    height: scale(56),
+    backgroundColor: '#3a3a3a',
+    borderRadius: scale(12),
+    paddingHorizontal: scale(16),
     fontSize: scale(16),
+    color: '#ffffff',
+    marginBottom: scale(16),
+    borderWidth: 0,
   },
-  forgot: {
-    color: '#888',
-    textAlign: 'right',
-    marginBottom: verticalScale(20),
+  forgotContainer: {
+    alignSelf: 'flex-end',
+    marginBottom: scale(24),
   },
-  button: {
-    backgroundColor: '#00cc00',
-    height: verticalScale(50),
-    borderRadius: moderateScale(5),
+  forgotText: {
+    fontSize: scale(14),
+    color: '#888888',
+    textDecorationLine: 'underline',
+  },
+  loginButton: {
+    height: scale(56),
+    backgroundColor: '#7ed321',
+    borderRadius: scale(28),
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: verticalScale(15),
+    marginBottom: scale(24),
   },
-  buttonText: {
-    color: '#fff',
+  buttonDisabled: {
+    opacity: 0.6,
+  },
+  loginButtonText: {
     fontSize: scale(18),
-    fontWeight: 'bold',
+    fontWeight: '600',
+    color: '#000000',
   },
-  googleButton: {
-    backgroundColor: '#4285f4',
-    height: verticalScale(50),
-    borderRadius: moderateScale(5),
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: verticalScale(15),
-  },
-  googleButtonText: {
-    color: '#fff',
-    fontSize: scale(18),
-  },
-  signup: {
-    color: '#888',
+  signupText: {
     textAlign: 'center',
+    fontSize: scale(14),
+  },
+  signupTextGray: {
+    color: '#888888',
+  },
+  signupTextLink: {
+    color: '#888888',
+    textDecorationLine: 'underline',
   },
 });

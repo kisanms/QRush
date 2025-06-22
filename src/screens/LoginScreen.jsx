@@ -5,105 +5,124 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
-  Dimensions,
-  Platform
+  Platform,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { supabase } from '../../supabaseClient';
-
-const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
-
-// Responsive scaling function
-const scale = (size) => {
-  const baseWidth = 375; // iPhone X width as base
-  const ratio = screenWidth / baseWidth;
-  const maxWidth = 400; // Maximum width for web
-
-  if (Platform.OS === 'web' && screenWidth > maxWidth) {
-    return size * (maxWidth / baseWidth);
-  }
-
-  return size * ratio;
-};
+import Toast from 'react-native-toast-message';
+import Svg, { Path } from 'react-native-svg';
+import { scale } from '../utils/utils';
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [emailFocused, setEmailFocused] = useState(false);
+  const [passwordFocused, setPasswordFocused] = useState(false);
+  const scaleAnim = useSharedValue(1);
+
+  const animatedButtonStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scaleAnim.value }],
+  }));
+
+  const handlePressIn = () => {
+    scaleAnim.value = withSpring(0.95);
+  };
+
+  const handlePressOut = () => {
+    scaleAnim.value = withSpring(1);
+  };
+
+  const showToast = (type, title, message) => {
+    Toast.show({
+      type,
+      text1: title,
+      text2: message,
+      position: 'top',
+      visibilityTime: 4000,
+    });
+  };
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
-      Alert.alert('Error', 'Please fill in all fields');
+      showToast('error', 'Error', 'Please fill in all fields');
       return;
     }
-
     setLoading(true);
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password,
       });
-
       if (error) {
-        Alert.alert('Login Error', error.message);
+        showToast('error', 'Login Error', error.message);
       } else {
-        Alert.alert('Success', 'Login successful!', [
-          { text: 'OK', onPress: () => navigation.navigate('Home') }
-        ]);
+        showToast('success', 'Success', 'Login successful!');
+        navigation.navigate('Home');
       }
     } catch (error) {
-      Alert.alert('Error', 'An unexpected error occurred');
+      showToast('error', 'Error', 'An unexpected error occurred');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <View style={styles.container}>
+    <LinearGradient colors={['#121212', '#1e1e1e', '#121212']} style={styles.container}>
       <View style={styles.content}>
+        <View style={styles.logoContainer}>
+          <Svg width={scale(60)} height={scale(60)} viewBox="0 0 24 24" fill="none">
+            <Path
+              d="M12 2L2 7L12 12L22 7L12 2Z"
+              stroke="#7ed321"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </Svg>
+        </View>
         <Text style={styles.title}>QRush Code Generator</Text>
         <Text style={styles.welcome}>Welcome back</Text>
-
         <View style={styles.formContainer}>
           <TextInput
-            style={styles.input}
+            style={[styles.input, emailFocused && styles.inputFocused]}
             placeholder="Email"
-            placeholderTextColor="#888"
+            placeholderTextColor="#b0b0b0"
             value={email}
             onChangeText={setEmail}
+            onFocus={() => setEmailFocused(true)}
+            onBlur={() => setEmailFocused(false)}
             autoCapitalize="none"
             keyboardType="email-address"
             editable={!loading}
           />
-
           <TextInput
-            style={styles.input}
+            style={[styles.input, passwordFocused && styles.inputFocused]}
             placeholder="Password"
-            placeholderTextColor="#888"
+            placeholderTextColor="#b0b0b0"
             value={password}
             onChangeText={setPassword}
+            onFocus={() => setPasswordFocused(true)}
+            onBlur={() => setPasswordFocused(false)}
             secureTextEntry
             editable={!loading}
           />
-
           <TouchableOpacity style={styles.forgotContainer}>
             <Text style={styles.forgotText}>Forgot password?</Text>
           </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.loginButton, loading && styles.buttonDisabled]}
-            onPress={handleLogin}
-            disabled={loading}
-          >
-            <Text style={styles.loginButtonText}>
-              {loading ? 'Logging in...' : 'Log In'}
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => navigation.navigate('Register')}
-            disabled={loading}
-          >
+          <Animated.View style={[styles.loginButton, animatedButtonStyle, loading && styles.buttonDisabled]}>
+            <TouchableOpacity
+              onPress={handleLogin}
+              onPressIn={handlePressIn}
+              onPressOut={handlePressOut}
+              disabled={loading}
+              activeOpacity={1}
+            >
+              <Text style={styles.loginButtonText}>{loading ? 'Logging in...' : 'Log In'}</Text>
+            </TouchableOpacity>
+          </Animated.View>
+          <TouchableOpacity onPress={() => navigation.navigate('Register')} disabled={loading}>
             <Text style={styles.signupText}>
               <Text style={styles.signupTextGray}>Don't have an account? </Text>
               <Text style={styles.signupTextLink}>Sign up</Text>
@@ -111,14 +130,13 @@ export default function LoginScreen({ navigation }) {
           </TouchableOpacity>
         </View>
       </View>
-    </View>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1e1e1e',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -127,16 +145,20 @@ const styles = StyleSheet.create({
     maxWidth: Platform.OS === 'web' ? 400 : '90%',
     paddingHorizontal: scale(20),
   },
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: scale(20),
+  },
   title: {
     fontSize: scale(28),
-    fontWeight: '600',
+    fontFamily: 'Inter-Bold',
     color: '#ffffff',
     textAlign: 'center',
     marginBottom: scale(40),
   },
   welcome: {
     fontSize: scale(24),
-    fontWeight: '500',
+    fontFamily: 'Inter-Regular',
     color: '#ffffff',
     textAlign: 'center',
     marginBottom: scale(40),
@@ -153,6 +175,24 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     marginBottom: scale(16),
     borderWidth: 0,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 3,
+      },
+      android: {
+        elevation: 3,
+      },
+      web: {
+        boxShadow: '0px 2px 5px rgba(0, 0, 0, 0.2)',
+      },
+    }),
+  },
+  inputFocused: {
+    borderWidth: 2,
+    borderColor: '#7ed321',
   },
   forgotContainer: {
     alignSelf: 'flex-end',
@@ -160,7 +200,7 @@ const styles = StyleSheet.create({
   },
   forgotText: {
     fontSize: scale(14),
-    color: '#888888',
+    color: '#b0b0b0',
     textDecorationLine: 'underline',
   },
   loginButton: {
@@ -170,13 +210,27 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: scale(24),
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 3,
+      },
+      android: {
+        elevation: 3,
+      },
+      web: {
+        boxShadow: '0px 2px 5px rgba(0, 0, 0, 0.2)',
+      },
+    }),
   },
   buttonDisabled: {
     opacity: 0.6,
   },
   loginButtonText: {
     fontSize: scale(18),
-    fontWeight: '600',
+    fontFamily: 'Inter-Bold',
     color: '#000000',
   },
   signupText: {
@@ -184,10 +238,10 @@ const styles = StyleSheet.create({
     fontSize: scale(14),
   },
   signupTextGray: {
-    color: '#888888',
+    color: '#b0b0b0',
   },
   signupTextLink: {
-    color: '#888888',
+    color: '#b0b0b0',
     textDecorationLine: 'underline',
   },
 });

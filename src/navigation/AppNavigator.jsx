@@ -1,15 +1,26 @@
 import React from 'react';
-import { NavigationContainer } from "@react-navigation/native";
-import { createStackNavigator } from "@react-navigation/stack";
-import LoginScreen from "../screens/LoginScreen";
-import RegisterScreen from "../screens/RegisterScreen";
-import HomeScreen from "../screens/HomeScreen";
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
+import LoginScreen from '../screens/LoginScreen';
+import RegisterScreen from '../screens/RegisterScreen';
+import HomeScreen from '../screens/HomeScreen';
 
 const Stack = createStackNavigator();
 
+const linking = {
+  prefixes: ['http://localhost:8081', 'https://your-app-domain.com'],
+  config: {
+    screens: {
+      Login: 'login',
+      Register: 'register',
+      Home: 'home',
+    },
+  },
+};
+
 export default function AppNavigator() {
   return (
-    <NavigationContainer>
+    <NavigationContainer linking={linking}>
       <Stack.Navigator
         initialRouteName="Login"
         screenOptions={{
@@ -40,7 +51,7 @@ export default function AppNavigator() {
           component={HomeScreen}
           options={{
             title: 'Home',
-            gestureEnabled: false, // Prevent swipe back from home
+            gestureEnabled: false,
           }}
         />
       </Stack.Navigator>

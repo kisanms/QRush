@@ -13,6 +13,7 @@ import { supabase } from '../../supabaseClient';
 import Toast from 'react-native-toast-message';
 import Svg, { Path } from 'react-native-svg';
 import { scale } from '../utils/utils';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
@@ -51,17 +52,26 @@ export default function LoginScreen({ navigation }) {
     }
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password,
       });
+
       if (error) {
         showToast('error', 'Login Error', error.message);
-      } else {
+      } else if (data.session) {
+        // Store session in AsyncStorage
+        await AsyncStorage.setItem('userSession', JSON.stringify({
+          user: data.session.user,
+          accessToken: data.session.access_token,
+          refreshToken: data.session.refresh_token
+        }));
+
         showToast('success', 'Success', 'Login successful!');
-        navigation.navigate('Home');
+        // Navigation will be handled by the auth state listener in App.js
       }
     } catch (error) {
+      console.log('Login error:', error);
       showToast('error', 'Error', 'An unexpected error occurred');
     } finally {
       setLoading(false);
@@ -111,18 +121,28 @@ export default function LoginScreen({ navigation }) {
           <TouchableOpacity style={styles.forgotContainer}>
             <Text style={styles.forgotText}>Forgot password?</Text>
           </TouchableOpacity>
-          <Animated.View style={[styles.loginButton, animatedButtonStyle, loading && styles.buttonDisabled]}>
-            <TouchableOpacity
-              onPress={handleLogin}
-              onPressIn={handlePressIn}
-              onPressOut={handlePressOut}
-              disabled={loading}
-              activeOpacity={1}
-            >
+
+          {/* Fixed Login Button - TouchableOpacity wraps the entire button */}
+          <TouchableOpacity
+            style={[styles.loginButton, loading && styles.buttonDisabled]}
+            onPress={handleLogin}
+            onPressIn={handlePressIn}
+            onPressOut={handlePressOut}
+            disabled={loading}
+            activeOpacity={0.8}
+          >
+            <Animated.View style={animatedButtonStyle}>
               <Text style={styles.loginButtonText}>{loading ? 'Logging in...' : 'Log In'}</Text>
-            </TouchableOpacity>
-          </Animated.View>
-          <TouchableOpacity onPress={() => navigation.navigate('Register')} disabled={loading}>
+            </Animated.View>
+          </TouchableOpacity>
+
+          {/* Fixed Sign Up Button - TouchableOpacity wraps the entire area */}
+          <TouchableOpacity
+            style={styles.signupContainer}
+            onPress={() => navigation.navigate('Register')}
+            disabled={loading}
+            activeOpacity={0.7}
+          >
             <Text style={styles.signupText}>
               <Text style={styles.signupTextGray}>Don't have an account? </Text>
               <Text style={styles.signupTextLink}>Sign up</Text>
@@ -197,6 +217,7 @@ const styles = StyleSheet.create({
   forgotContainer: {
     alignSelf: 'flex-end',
     marginBottom: scale(24),
+    padding: scale(5), // Add padding for better touch area
   },
   forgotText: {
     fontSize: scale(14),
@@ -232,6 +253,11 @@ const styles = StyleSheet.create({
     fontSize: scale(18),
     fontFamily: 'Inter-Bold',
     color: '#000000',
+  },
+  signupContainer: {
+    paddingVertical: scale(10), // Add padding for better touch area
+    paddingHorizontal: scale(20), // Add horizontal padding for better touch area
+    alignItems: 'center',
   },
   signupText: {
     textAlign: 'center',

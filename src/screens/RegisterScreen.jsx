@@ -132,21 +132,31 @@ export default function RegisterScreen({ navigation }) {
             secureTextEntry
             editable={!loading}
           />
-          <Animated.View style={[styles.registerButton, animatedButtonStyle, loading && styles.buttonDisabled]}>
-            <TouchableOpacity
-              onPress={handleRegister}
-              onPressIn={handlePressIn}
-              onPressOut={handlePressOut}
-              disabled={loading}
-              activeOpacity={1}
-            >
+
+          {/* Fixed Register Button - TouchableOpacity wraps the entire button */}
+          <TouchableOpacity
+            style={[styles.registerButton, loading && styles.buttonDisabled]}
+            onPress={handleRegister}
+            onPressIn={handlePressIn}
+            onPressOut={handlePressOut}
+            disabled={loading}
+            activeOpacity={0.8}
+          >
+            <Animated.View style={animatedButtonStyle}>
               <Text style={styles.registerButtonText}>{loading ? 'Creating Account...' : 'Sign Up'}</Text>
-            </TouchableOpacity>
-          </Animated.View>
-          <TouchableOpacity onPress={() => navigation.reset({
-            index: 0,
-            routes: [{ name: 'Login' }],
-          })} disabled={loading}>
+            </Animated.View>
+          </TouchableOpacity>
+
+          {/* Fixed Login Link Button - TouchableOpacity wraps the entire area */}
+          <TouchableOpacity
+            style={styles.loginContainer}
+            onPress={() => navigation.reset({
+              index: 0,
+              routes: [{ name: 'Login' }],
+            })}
+            disabled={loading}
+            activeOpacity={0.7}
+          >
             <Text style={styles.loginText}>
               <Text style={styles.loginTextGray}>Already have an account? </Text>
               <Text style={styles.loginTextLink}>Log in</Text>
@@ -165,7 +175,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   content: {
-    width: '100%', // This was '100' (missing %)
+    width: '100%',
     maxWidth: Platform.OS === 'web' ? 400 : '90%',
     paddingHorizontal: scale(20),
   },
@@ -248,6 +258,11 @@ const styles = StyleSheet.create({
     fontSize: scale(18),
     fontFamily: 'Inter-Bold',
     color: '#000000',
+  },
+  loginContainer: {
+    paddingVertical: scale(10), // Add padding for better touch area
+    paddingHorizontal: scale(20), // Add horizontal padding for better touch area
+    alignItems: 'center',
   },
   loginText: {
     textAlign: 'center',

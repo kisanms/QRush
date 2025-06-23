@@ -20,7 +20,7 @@ const linking = {
   },
 };
 
-export default function AppNavigator() {
+export default function AppNavigator({ isAuthenticated }) {
   const navigationRef = React.useRef();
 
   useEffect(() => {
@@ -28,8 +28,8 @@ export default function AppNavigator() {
       const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
         const currentRoute = navigationRef.current?.getCurrentRoute();
 
-        // If user is on Login screen, exit the app
-        if (currentRoute?.name === 'Login') {
+        // If user is on Login screen or Home screen, exit the app
+        if (currentRoute?.name === 'Login' || currentRoute?.name === 'Home') {
           BackHandler.exitApp();
           return true;
         }
@@ -68,40 +68,47 @@ export default function AppNavigator() {
   return (
     <NavigationContainer linking={linking} ref={navigationRef}>
       <Stack.Navigator
-        initialRouteName="Login"
+        initialRouteName={isAuthenticated ? "Home" : "Login"}
         screenOptions={screenOptions}
       >
-        <Stack.Screen
-          name="Login"
-          component={LoginScreen}
-          options={{
-            title: 'Login',
-            animationTypeForReplace: 'push',
-          }}
-        />
-        <Stack.Screen
-          name="Register"
-          component={RegisterScreen}
-          options={{
-            title: 'Register',
-            animationTypeForReplace: 'push',
-          }}
-        />
-        <Stack.Screen
-          name="Home"
-          component={HomeScreen}
-          options={{
-            title: 'Home',
-            gestureEnabled: false,
-            ...(Platform.OS !== 'web' && {
-              transitionSpec: {
-                open: TransitionSpecs.FadeInFromBottomAndroidSpec,
-                close: TransitionSpecs.FadeOutToBottomAndroidSpec,
-              },
-              cardStyleInterpolator: CardStyleInterpolators.forFadeFromBottomAndroid,
-            }),
-          }}
-        />
+        {isAuthenticated ? (
+          // Authenticated user screens
+          <Stack.Screen
+            name="Home"
+            component={HomeScreen}
+            options={{
+              title: 'Home',
+              gestureEnabled: false,
+              ...(Platform.OS !== 'web' && {
+                transitionSpec: {
+                  open: TransitionSpecs.FadeInFromBottomAndroidSpec,
+                  close: TransitionSpecs.FadeOutToBottomAndroidSpec,
+                },
+                cardStyleInterpolator: CardStyleInterpolators.forFadeFromBottomAndroid,
+              }),
+            }}
+          />
+        ) : (
+          // Non-authenticated user screens
+          <>
+            <Stack.Screen
+              name="Login"
+              component={LoginScreen}
+              options={{
+                title: 'Login',
+                animationTypeForReplace: 'push',
+              }}
+            />
+            <Stack.Screen
+              name="Register"
+              component={RegisterScreen}
+              options={{
+                title: 'Register',
+                animationTypeForReplace: 'push',
+              }}
+            />
+          </>
+        )}
       </Stack.Navigator>
     </NavigationContainer>
   );

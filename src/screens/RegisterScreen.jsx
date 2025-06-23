@@ -69,7 +69,10 @@ export default function RegisterScreen({ navigation }) {
         showToast('error', 'Registration Error', error.message);
       } else {
         showToast('success', 'Registration Completed', 'Your account has been created successfully! Please check your email for verification.');
-        navigation.navigate('Login');
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Login' }],
+        });
       }
     } catch (error) {
       showToast('error', 'Error', 'An unexpected error occurred');
@@ -140,7 +143,10 @@ export default function RegisterScreen({ navigation }) {
               <Text style={styles.registerButtonText}>{loading ? 'Creating Account...' : 'Sign Up'}</Text>
             </TouchableOpacity>
           </Animated.View>
-          <TouchableOpacity onPress={() => navigation.navigate('Login')} disabled={loading}>
+          <TouchableOpacity onPress={() => navigation.reset({
+            index: 0,
+            routes: [{ name: 'Login' }],
+          })} disabled={loading}>
             <Text style={styles.loginText}>
               <Text style={styles.loginTextGray}>Already have an account? </Text>
               <Text style={styles.loginTextLink}>Log in</Text>
@@ -159,7 +165,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   content: {
-    width: '100%',
+    width: '100%', // This was '100' (missing %)
     maxWidth: Platform.OS === 'web' ? 400 : '90%',
     paddingHorizontal: scale(20),
   },

@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
+import { CardStyleInterpolators, TransitionSpecs } from '@react-navigation/stack';
+import { Platform, BackHandler } from 'react-native';
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
 import HomeScreen from '../screens/HomeScreen';
@@ -19,16 +21,55 @@ const linking = {
 };
 
 export default function AppNavigator() {
+  const navigationRef = React.useRef();
+
+  useEffect(() => {
+    if (Platform.OS === 'android') {
+      const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+        const currentRoute = navigationRef.current?.getCurrentRoute();
+
+        // If user is on Login screen, exit the app
+        if (currentRoute?.name === 'Login') {
+          BackHandler.exitApp();
+          return true;
+        }
+
+        // Allow default back behavior for other screens
+        return false;
+      });
+
+      return () => backHandler.remove();
+    }
+  }, []);
+
+  // Screen options for mobile (with animations)
+  const mobileScreenOptions = {
+    headerShown: false,
+    cardStyle: { backgroundColor: '#1e1e1e' },
+    animationEnabled: true,
+    gestureEnabled: true,
+    transitionSpec: {
+      open: TransitionSpecs.TransitionIOSSpec,
+      close: TransitionSpecs.TransitionIOSSpec,
+    },
+    cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+  };
+
+  // Screen options for web (no animations)
+  const webScreenOptions = {
+    headerShown: false,
+    cardStyle: { backgroundColor: '#1e1e1e' },
+    animationEnabled: false,
+    gestureEnabled: false,
+  };
+
+  const screenOptions = Platform.OS === 'web' ? webScreenOptions : mobileScreenOptions;
+
   return (
-    <NavigationContainer linking={linking}>
+    <NavigationContainer linking={linking} ref={navigationRef}>
       <Stack.Navigator
         initialRouteName="Login"
-        screenOptions={{
-          headerShown: false,
-          cardStyle: { backgroundColor: '#1e1e1e' },
-          animationEnabled: true,
-          gestureEnabled: true,
-        }}
+        screenOptions={screenOptions}
       >
         <Stack.Screen
           name="Login"
@@ -52,6 +93,13 @@ export default function AppNavigator() {
           options={{
             title: 'Home',
             gestureEnabled: false,
+            ...(Platform.OS !== 'web' && {
+              transitionSpec: {
+                open: TransitionSpecs.FadeInFromBottomAndroidSpec,
+                close: TransitionSpecs.FadeOutToBottomAndroidSpec,
+              },
+              cardStyleInterpolator: CardStyleInterpolators.forFadeFromBottomAndroid,
+            }),
           }}
         />
       </Stack.Navigator>

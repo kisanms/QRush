@@ -3,7 +3,7 @@ import * as Font from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
 import Toast from "react-native-toast-message";
 import AppNavigator from "./src/navigation/AppNavigator";
-import { View } from "react-native";
+import { StatusBar, View } from "react-native";
 
 // Prevent the splash screen from auto-hiding until resources are loaded
 SplashScreen.preventAutoHideAsync();
@@ -42,6 +42,7 @@ export default function App() {
 
   return (
     <View onLayout={onLayoutRootView} style={{ flex: 1 }}>
+      <StatusBar />
       <AppNavigator />
       <Toast />
     </View>

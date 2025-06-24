@@ -1,13 +1,18 @@
 import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import { CardStyleInterpolators, TransitionSpecs } from '@react-navigation/stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Platform, BackHandler } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { TransitionSpecs, CardStyleInterpolators } from '@react-navigation/stack'; // Added imports
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
 import HomeScreen from '../screens/HomeScreen';
+import AddQRCodeScreen from '../screens/AddQRCodeScreen';
+import SettingsScreen from '../screens/SettingsScreen';
 
 const Stack = createStackNavigator();
+const Tab = createBottomTabNavigator();
 
 const linking = {
   prefixes: ['http://localhost:8081', 'https://your-app-domain.com'],
@@ -16,9 +21,41 @@ const linking = {
       Login: 'login',
       Register: 'register',
       Home: 'home',
+      AddQRCode: 'add-qrcode',
+      Settings: 'settings',
     },
   },
 };
+
+function TabNavigator() {
+  return (
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        tabBarIcon: ({ focused, color, size }) => {
+          let iconName;
+
+          if (route.name === 'Home') {
+            iconName = focused ? 'home' : 'home-outline';
+          } else if (route.name === 'Add QR Code') {
+            iconName = focused ? 'qr-code' : 'qr-code-outline';
+          } else if (route.name === 'Settings') {
+            iconName = focused ? 'settings' : 'settings-outline';
+          }
+
+          return <Ionicons name={iconName} size={size} color={color} />;
+        },
+        tabBarActiveTintColor: '#7ed321',
+        tabBarInactiveTintColor: '#b0b0b0',
+        tabBarStyle: { backgroundColor: '#1e1e1e' },
+        headerShown: false,
+      })}
+    >
+      <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="Add QR Code" component={AddQRCodeScreen} />
+      <Tab.Screen name="Settings" component={SettingsScreen} />
+    </Tab.Navigator>
+  );
+}
 
 export default function AppNavigator({ isAuthenticated }) {
   const navigationRef = React.useRef();
@@ -27,22 +64,16 @@ export default function AppNavigator({ isAuthenticated }) {
     if (Platform.OS === 'android') {
       const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
         const currentRoute = navigationRef.current?.getCurrentRoute();
-
-        // If user is on Login screen or Home screen, exit the app
         if (currentRoute?.name === 'Login' || currentRoute?.name === 'Home') {
           BackHandler.exitApp();
           return true;
         }
-
-        // Allow default back behavior for other screens
         return false;
       });
-
       return () => backHandler.remove();
     }
   }, []);
 
-  // Screen options for mobile (with animations)
   const mobileScreenOptions = {
     headerShown: false,
     cardStyle: { backgroundColor: '#1e1e1e' },
@@ -55,7 +86,6 @@ export default function AppNavigator({ isAuthenticated }) {
     cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
   };
 
-  // Screen options for web (no animations)
   const webScreenOptions = {
     headerShown: false,
     cardStyle: { backgroundColor: '#1e1e1e' },
@@ -68,44 +98,26 @@ export default function AppNavigator({ isAuthenticated }) {
   return (
     <NavigationContainer linking={linking} ref={navigationRef}>
       <Stack.Navigator
-        initialRouteName={isAuthenticated ? "Home" : "Login"}
+        initialRouteName={isAuthenticated ? "TabNavigator" : "Login"}
         screenOptions={screenOptions}
       >
         {isAuthenticated ? (
-          // Authenticated user screens
           <Stack.Screen
-            name="Home"
-            component={HomeScreen}
-            options={{
-              title: 'Home',
-              gestureEnabled: false,
-              ...(Platform.OS !== 'web' && {
-                transitionSpec: {
-                  open: TransitionSpecs.FadeInFromBottomAndroidSpec,
-                  close: TransitionSpecs.FadeOutToBottomAndroidSpec,
-                },
-                cardStyleInterpolator: CardStyleInterpolators.forFadeFromBottomAndroid,
-              }),
-            }}
+            name="TabNavigator"
+            component={TabNavigator}
+            options={{ headerShown: false }}
           />
         ) : (
-          // Non-authenticated user screens
           <>
             <Stack.Screen
               name="Login"
               component={LoginScreen}
-              options={{
-                title: 'Login',
-                animationTypeForReplace: 'push',
-              }}
+              options={{ title: 'Login', animationTypeForReplace: 'push' }}
             />
             <Stack.Screen
               name="Register"
               component={RegisterScreen}
-              options={{
-                title: 'Register',
-                animationTypeForReplace: 'push',
-              }}
+              options={{ title: 'Register', animationTypeForReplace: 'push' }}
             />
           </>
         )}

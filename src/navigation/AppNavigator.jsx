@@ -9,7 +9,7 @@ import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
 import HomeScreen from '../screens/HomeScreen';
 import AddQRCodeScreen from '../screens/AddQRCodeScreen';
-import SettingsScreen from '../screens/SettingsScreen';
+// import SettingsScreen from '../screens/SettingsScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -52,7 +52,7 @@ function TabNavigator() {
     >
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Add QR Code" component={AddQRCodeScreen} />
-      <Tab.Screen name="Settings" component={SettingsScreen} />
+      {/* <Tab.Screen name="Settings" component={SettingsScreen} /> */}
     </Tab.Navigator>
   );
 }

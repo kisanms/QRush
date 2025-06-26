@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Modal, StyleSheet, Dimensions, Platform, Alert, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import QRCode from 'react-native-qrcode-svg';
-import { supabase } from '../../supabaseClient';
+import { supabase } from '../utils/supabaseClient';
 
 const { height, width } = Dimensions.get('window');
 

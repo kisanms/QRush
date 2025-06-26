@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -9,19 +9,21 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
-import { supabase } from '../../supabaseClient';
+import { supabase } from '../utils/supabaseClient';
 import Toast from 'react-native-toast-message';
 import Svg, { Path } from 'react-native-svg';
 import { scale } from '../utils/utils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [emailFocused, setEmailFocused] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const scaleAnim = useSharedValue(1);
+  const passwordInputRef = useRef(null);
 
   const animatedButtonStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scaleAnim.value }],
@@ -60,7 +62,6 @@ export default function LoginScreen({ navigation }) {
       if (error) {
         showToast('error', 'Login Error', error.message);
       } else if (data.session) {
-        // Store session in AsyncStorage
         await AsyncStorage.setItem('userSession', JSON.stringify({
           user: data.session.user,
           accessToken: data.session.access_token,
@@ -68,7 +69,6 @@ export default function LoginScreen({ navigation }) {
         }));
 
         showToast('success', 'Success', 'Login successful!');
-        // Navigation will be handled by the auth state listener in App.js
       }
     } catch (error) {
       console.log('Login error:', error);
@@ -76,6 +76,13 @@ export default function LoginScreen({ navigation }) {
     } finally {
       setLoading(false);
     }
+  };
+
+  const toggleShowPassword = () => {
+    if (passwordInputRef.current && passwordFocused) {
+      passwordInputRef.current.focus();
+    }
+    setShowPassword(!showPassword);
   };
 
   return (
@@ -107,22 +114,35 @@ export default function LoginScreen({ navigation }) {
             keyboardType="email-address"
             editable={!loading}
           />
-          <TextInput
-            style={[styles.input, passwordFocused && styles.inputFocused]}
-            placeholder="Password"
-            placeholderTextColor="#b0b0b0"
-            value={password}
-            onChangeText={setPassword}
-            onFocus={() => setPasswordFocused(true)}
-            onBlur={() => setPasswordFocused(false)}
-            secureTextEntry
-            editable={!loading}
-          />
+          <View style={styles.inputContainer}>
+            <TextInput
+              ref={passwordInputRef}
+              style={[styles.input, passwordFocused && styles.inputFocused, styles.passwordInput]}
+              placeholder="Password"
+              placeholderTextColor="#b0b0b0"
+              value={password}
+              onChangeText={setPassword}
+              onFocus={() => setPasswordFocused(true)}
+              onBlur={() => setPasswordFocused(false)}
+              secureTextEntry={!showPassword}
+              editable={!loading}
+            />
+            <TouchableOpacity
+              style={styles.eyeIcon}
+              onPress={toggleShowPassword}
+              disabled={loading}
+            >
+              <MaterialCommunityIcons
+                name={showPassword ? 'eye-off' : 'eye'}
+                size={scale(24)}
+                color="#b0b0b0"
+              />
+
+            </TouchableOpacity>
+          </View>
           <TouchableOpacity style={styles.forgotContainer}>
             <Text style={styles.forgotText}>Forgot password?</Text>
           </TouchableOpacity>
-
-          {/* Fixed Login Button - TouchableOpacity wraps the entire button */}
           <TouchableOpacity
             style={[styles.loginButton, loading && styles.buttonDisabled]}
             onPress={handleLogin}
@@ -135,8 +155,6 @@ export default function LoginScreen({ navigation }) {
               <Text style={styles.loginButtonText}>{loading ? 'Logging in...' : 'Log In'}</Text>
             </Animated.View>
           </TouchableOpacity>
-
-          {/* Fixed Sign Up Button - TouchableOpacity wraps the entire area */}
           <TouchableOpacity
             style={styles.signupContainer}
             onPress={() => navigation.navigate('Register')}
@@ -186,6 +204,9 @@ const styles = StyleSheet.create({
   formContainer: {
     width: '100%',
   },
+  inputContainer: {
+    position: 'relative',
+  },
   input: {
     height: scale(56),
     backgroundColor: '#3a3a3a',
@@ -210,14 +231,22 @@ const styles = StyleSheet.create({
       },
     }),
   },
+  passwordInput: {
+    paddingRight: scale(48),
+  },
   inputFocused: {
     borderWidth: 2,
     borderColor: '#7ed321',
   },
+  eyeIcon: {
+    position: 'absolute',
+    right: scale(16),
+    top: scale(16),
+  },
   forgotContainer: {
     alignSelf: 'flex-end',
     marginBottom: scale(24),
-    padding: scale(5), // Add padding for better touch area
+    padding: scale(5),
   },
   forgotText: {
     fontSize: scale(14),
@@ -255,8 +284,8 @@ const styles = StyleSheet.create({
     color: '#000000',
   },
   signupContainer: {
-    paddingVertical: scale(10), // Add padding for better touch area
-    paddingHorizontal: scale(20), // Add horizontal padding for better touch area
+    paddingVertical: scale(10),
+    paddingHorizontal: scale(20),
     alignItems: 'center',
   },
   signupText: {

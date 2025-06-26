@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -9,10 +9,11 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
-import { supabase } from '../../supabaseClient';
+import { supabase } from '../utils/supabaseClient';
 import Toast from 'react-native-toast-message';
 import Svg, { Path } from 'react-native-svg';
 import { scale } from '../utils/utils';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
 export default function RegisterScreen({ navigation }) {
   const [email, setEmail] = useState('');
@@ -22,7 +23,11 @@ export default function RegisterScreen({ navigation }) {
   const [emailFocused, setEmailFocused] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
   const [confirmPasswordFocused, setConfirmPasswordFocused] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const scaleAnim = useSharedValue(1);
+  const passwordInputRef = useRef(null);
+  const confirmPasswordInputRef = useRef(null);
 
   const animatedButtonStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scaleAnim.value }],
@@ -81,6 +86,20 @@ export default function RegisterScreen({ navigation }) {
     }
   };
 
+  const toggleShowPassword = () => {
+    if (passwordInputRef.current && passwordFocused) {
+      passwordInputRef.current.focus();
+    }
+    setShowPassword(!showPassword);
+  };
+
+  const toggleShowConfirmPassword = () => {
+    if (confirmPasswordInputRef.current && confirmPasswordFocused) {
+      confirmPasswordInputRef.current.focus();
+    }
+    setShowConfirmPassword(!showConfirmPassword);
+  };
+
   return (
     <LinearGradient colors={['#121212', '#1e1e1e', '#121212']} style={styles.container}>
       <View style={styles.content}>
@@ -110,30 +129,56 @@ export default function RegisterScreen({ navigation }) {
             keyboardType="email-address"
             editable={!loading}
           />
-          <TextInput
-            style={[styles.input, passwordFocused && styles.inputFocused]}
-            placeholder="Password"
-            placeholderTextColor="#b0b0b0"
-            value={password}
-            onChangeText={setPassword}
-            onFocus={() => setPasswordFocused(true)}
-            onBlur={() => setPasswordFocused(false)}
-            secureTextEntry
-            editable={!loading}
-          />
-          <TextInput
-            style={[styles.input, confirmPasswordFocused && styles.inputFocused]}
-            placeholder="Confirm Password"
-            placeholderTextColor="#b0b0b0"
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-            onFocus={() => setConfirmPasswordFocused(true)}
-            onBlur={() => setConfirmPasswordFocused(false)}
-            secureTextEntry
-            editable={!loading}
-          />
-
-          {/* Fixed Register Button - TouchableOpacity wraps the entire button */}
+          <View style={styles.inputContainer}>
+            <TextInput
+              ref={passwordInputRef}
+              style={[styles.input, passwordFocused && styles.inputFocused, styles.passwordInput]}
+              placeholder="Password"
+              placeholderTextColor="#b0b0b0"
+              value={password}
+              onChangeText={setPassword}
+              onFocus={() => setPasswordFocused(true)}
+              onBlur={() => setPasswordFocused(false)}
+              secureTextEntry={!showPassword}
+              editable={!loading}
+            />
+            <TouchableOpacity
+              style={styles.eyeIcon}
+              onPress={toggleShowPassword}
+              disabled={loading}
+            >
+              <MaterialCommunityIcons
+                name={showPassword ? 'eye-off' : 'eye'}
+                size={scale(24)}
+                color="#b0b0b0"
+              />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.inputContainer}>
+            <TextInput
+              ref={confirmPasswordInputRef}
+              style={[styles.input, confirmPasswordFocused && styles.inputFocused, styles.passwordInput]}
+              placeholder="Confirm Password"
+              placeholderTextColor="#b0b0b0"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              onFocus={() => setConfirmPasswordFocused(true)}
+              onBlur={() => setConfirmPasswordFocused(false)}
+              secureTextEntry={!showConfirmPassword}
+              editable={!loading}
+            />
+            <TouchableOpacity
+              style={styles.eyeIcon}
+              onPress={toggleShowConfirmPassword}
+              disabled={loading}
+            >
+              <MaterialCommunityIcons
+                name={showPassword ? 'eye-off' : 'eye'}
+                size={scale(24)}
+                color="#b0b0b0"
+              />
+            </TouchableOpacity>
+          </View>
           <TouchableOpacity
             style={[styles.registerButton, loading && styles.buttonDisabled]}
             onPress={handleRegister}
@@ -146,8 +191,6 @@ export default function RegisterScreen({ navigation }) {
               <Text style={styles.registerButtonText}>{loading ? 'Creating Account...' : 'Sign Up'}</Text>
             </Animated.View>
           </TouchableOpacity>
-
-          {/* Fixed Login Link Button - TouchableOpacity wraps the entire area */}
           <TouchableOpacity
             style={styles.loginContainer}
             onPress={() => navigation.reset({
@@ -200,6 +243,9 @@ const styles = StyleSheet.create({
   formContainer: {
     width: '100%',
   },
+  inputContainer: {
+    position: 'relative',
+  },
   input: {
     height: scale(56),
     backgroundColor: '#3a3a3a',
@@ -224,9 +270,17 @@ const styles = StyleSheet.create({
       },
     }),
   },
+  passwordInput: {
+    paddingRight: scale(48),
+  },
   inputFocused: {
     borderWidth: 2,
     borderColor: '#7ed321',
+  },
+  eyeIcon: {
+    position: 'absolute',
+    right: scale(16),
+    top: scale(16),
   },
   registerButton: {
     height: scale(56),
@@ -260,8 +314,8 @@ const styles = StyleSheet.create({
     color: '#000000',
   },
   loginContainer: {
-    paddingVertical: scale(10), // Add padding for better touch area
-    paddingHorizontal: scale(20), // Add horizontal padding for better touch area
+    paddingVertical: scale(10),
+    paddingHorizontal: scale(20),
     alignItems: 'center',
   },
   loginText: {

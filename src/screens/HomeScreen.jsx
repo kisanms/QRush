@@ -9,11 +9,12 @@ import {
   FlatList,
   RefreshControl,
   ScrollView,
+  Alert,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from "react-native-reanimated";
 import { scale } from "../utils/utils";
-import { supabase } from "../../supabaseClient";
+import { supabase } from "../utils/supabaseClient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Toast from "react-native-toast-message";
 import Svg, { Path } from "react-native-svg";
@@ -616,7 +617,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: scale(32),
-    paddingTop: scale(40),
+    paddingTop: scale(20),
   },
   emptyStateContent: {
     alignItems: "center",
@@ -639,7 +640,7 @@ const styles = StyleSheet.create({
     color: "#b0b0b0",
     textAlign: "center",
     lineHeight: scale(24),
-    marginBottom: scale(32),
+    marginBottom: scale(25),
   },
   emptyStateButton: {
     backgroundColor: "#7ed321",

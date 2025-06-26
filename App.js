@@ -4,8 +4,9 @@ import * as SplashScreen from "expo-splash-screen";
 import Toast from "react-native-toast-message";
 import AppNavigator from "./src/navigation/AppNavigator";
 import { StatusBar, View } from "react-native";
-import { supabase } from "./supabaseClient";
+import { supabase } from "./src/utils/supabaseClient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { SafeAreaView } from "react-native-web";
 
 // Prevent the splash screen from auto-hiding until resources are loaded
 SplashScreen.preventAutoHideAsync();

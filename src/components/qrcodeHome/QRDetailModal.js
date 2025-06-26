@@ -33,17 +33,39 @@ const QRDetailModal = ({
       day: "numeric",
     });
 
+  const handleSharePress = () => {
+    // Close modal first to prevent UI blocking
+    onClose();
+    // Add a small delay to ensure modal is closed before sharing
+    setTimeout(() => {
+      onShare(selectedQR);
+    }, 300);
+  };
+
+  const handleDeletePress = () => {
+    onDelete(selectedQR.id);
+  };
+
+  const handleOpenPress = () => {
+    onOpenURL(selectedQR.url);
+  };
+
   return (
     <Modal
       animationType={Platform.OS === "web" ? "fade" : "slide"}
       transparent={true}
       visible={visible}
       onRequestClose={onClose}
+      statusBarTranslucent={Platform.OS === "android"}
     >
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
           <View style={styles.modalHeader}>
-            <TouchableOpacity style={styles.backButton} onPress={onClose}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={onClose}
+              activeOpacity={0.7}
+            >
               <Svg
                 width={scale(24)}
                 height={scale(24)}
@@ -59,7 +81,9 @@ const QRDetailModal = ({
                 />
               </Svg>
             </TouchableOpacity>
-            <Text style={styles.modalTitle}>{selectedQR.title}</Text>
+            <Text style={styles.modalTitle} numberOfLines={1}>
+              {selectedQR.title}
+            </Text>
             <View style={styles.placeholder} />
           </View>
 
@@ -73,7 +97,7 @@ const QRDetailModal = ({
                 getRef={qrCodeRef}
               />
             </View>
-            <Text style={styles.modalUrl} numberOfLines={2}>
+            <Text style={styles.modalUrl} numberOfLines={3}>
               {selectedQR.url}
             </Text>
             <Text style={styles.modalDate}>
@@ -83,7 +107,8 @@ const QRDetailModal = ({
             <View style={styles.modalActions}>
               <TouchableOpacity
                 style={styles.modalActionButton}
-                onPress={() => onOpenURL(selectedQR.url)}
+                onPress={handleOpenPress}
+                activeOpacity={0.7}
               >
                 <Svg
                   width={scale(24)}
@@ -104,7 +129,8 @@ const QRDetailModal = ({
 
               <TouchableOpacity
                 style={styles.modalActionButton}
-                onPress={() => onShare(selectedQR)}
+                onPress={handleSharePress}
+                activeOpacity={0.7}
               >
                 <Svg
                   width={scale(24)}
@@ -125,7 +151,8 @@ const QRDetailModal = ({
 
               <TouchableOpacity
                 style={styles.modalActionButton}
-                onPress={() => onDelete(selectedQR.id)}
+                onPress={handleDeletePress}
+                activeOpacity={0.7}
               >
                 <Svg
                   width={scale(24)}
@@ -184,7 +211,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.6)",
+    backgroundColor: "rgba(0,0,0,0.7)",
     padding: scale(20),
   },
   modalContent: {
@@ -193,6 +220,7 @@ const styles = StyleSheet.create({
     borderRadius: scale(12),
     width: isMobile ? "90%" : scale(400),
     maxWidth: 500,
+    maxHeight: "90%",
     alignItems: "center",
     elevation: 5,
     shadowColor: "#000",
@@ -209,16 +237,19 @@ const styles = StyleSheet.create({
   },
   backButton: {
     padding: scale(8),
+    borderRadius: scale(5),
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
   },
   modalTitle: {
-    fontSize: scale(20),
+    fontSize: scale(18),
     color: "#fff",
     fontWeight: "700",
     textAlign: "center",
     flex: 1,
+    marginHorizontal: scale(10),
   },
   placeholder: {
-    width: scale(32),
+    width: scale(40),
   },
   modalDetails: {
     width: "100%",
@@ -229,6 +260,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     padding: scale(12),
     borderRadius: scale(8),
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
   modalUrl: {
     fontSize: scale(14),
@@ -236,11 +272,13 @@ const styles = StyleSheet.create({
     marginBottom: scale(10),
     textAlign: "center",
     lineHeight: scale(18),
+    paddingHorizontal: scale(10),
   },
   modalDate: {
     fontSize: scale(12),
     color: "#7ed321",
-    marginBottom: scale(20),
+    marginBottom: scale(25),
+    fontWeight: "500",
   },
   modalActions: {
     flexDirection: "row",
@@ -250,13 +288,14 @@ const styles = StyleSheet.create({
   },
   modalActionButton: {
     alignItems: "center",
-    padding: scale(10),
+    padding: scale(12),
     borderRadius: scale(8),
     backgroundColor: "rgba(255,255,255,0.1)",
+    minWidth: scale(70),
   },
   modalActionText: {
     color: "#fff",
-    fontSize: scale(14),
+    fontSize: scale(12),
     marginTop: scale(6),
     fontWeight: "500",
   },

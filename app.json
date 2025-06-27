@@ -10,7 +10,7 @@
     "splash": {
       "image": "./assets/play_store_512.png",
       "resizeMode": "contain",
-      "backgroundColor": "red"
+      "backgroundColor": "#ffffff"
     },
     "ios": {
       "supportsTablet": true

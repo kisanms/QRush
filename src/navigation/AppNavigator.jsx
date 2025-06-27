@@ -4,9 +4,10 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Platform, BackHandler } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { TransitionSpecs, CardStyleInterpolators } from '@react-navigation/stack'; // Added imports
+import { TransitionSpecs, CardStyleInterpolators } from '@react-navigation/stack';
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
+import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
 import HomeScreen from '../screens/HomeScreen';
 import AddQRCodeScreen from '../screens/AddQRCodeScreen';
 // import SettingsScreen from '../screens/SettingsScreen';
@@ -15,11 +16,12 @@ const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
 const linking = {
-  prefixes: ['http://localhost:8081', 'https://your-app-domain.com'],
+  prefixes: ['qrushcode://'],
   config: {
     screens: {
       Login: 'login',
       Register: 'register',
+      ForgotPassword: 'forgot-password',
       Home: 'home',
       AddQRCode: 'add-qrcode',
       Settings: 'settings',
@@ -64,7 +66,7 @@ export default function AppNavigator({ isAuthenticated }) {
     if (Platform.OS === 'android') {
       const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
         const currentRoute = navigationRef.current?.getCurrentRoute();
-        if (currentRoute?.name === 'Login' || currentRoute?.name === 'Home') {
+        if (currentRoute?.name === 'Login' || currentRoute?.name === 'Home' || currentRoute?.name === 'ForgotPassword') {
           BackHandler.exitApp();
           return true;
         }
@@ -118,6 +120,11 @@ export default function AppNavigator({ isAuthenticated }) {
               name="Register"
               component={RegisterScreen}
               options={{ title: 'Register', animationTypeForReplace: 'push' }}
+            />
+            <Stack.Screen
+              name="ForgotPassword"
+              component={ForgotPasswordScreen}
+              options={{ title: 'Forgot Password', animationTypeForReplace: 'push' }}
             />
           </>
         )}

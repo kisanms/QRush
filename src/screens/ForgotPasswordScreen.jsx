@@ -13,18 +13,13 @@ import { supabase } from '../utils/supabaseClient';
 import Toast from 'react-native-toast-message';
 import Svg, { Path } from 'react-native-svg';
 import { scale } from '../utils/utils';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
-export default function LoginScreen({ navigation }) {
+export default function ForgotPasswordScreen({ navigation }) {
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [emailFocused, setEmailFocused] = useState(false);
-  const [passwordFocused, setPasswordFocused] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const scaleAnim = useSharedValue(1);
-  const passwordInputRef = useRef(null);
+  const emailInputRef = useRef(null);
 
   const animatedButtonStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scaleAnim.value }],
@@ -48,49 +43,37 @@ export default function LoginScreen({ navigation }) {
     });
   };
 
-  const handleLogin = async () => {
-    if (!email.trim() || !password.trim()) {
-      showToast('error', 'Error', 'Please fill in all fields');
+  const handleResetPassword = async () => {
+    if (!email.trim()) {
+      showToast('error', 'Error', 'Please enter your email address');
       return;
     }
     setLoading(true);
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password,
+      // Updated redirect URL to point to the reset password page
+      const redirectTo = 'https://qrush-reset-password.vercel.app/reset-password';
+
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo,
       });
 
       if (error) {
-        showToast('error', 'Login Error', error.message);
-      } else if (data.session) {
-        await AsyncStorage.setItem('userSession', JSON.stringify({
-          user: data.session.user,
-          accessToken: data.session.access_token,
-          refreshToken: data.session.refresh_token
-        }));
-
-        showToast('success', 'Success', 'Login successful!');
+        showToast('error', 'Reset Password Error', error.message);
+      } else {
+        showToast('success', 'Success', 'Password reset email sent! Please check your inbox and follow the instructions.');
+        navigation.navigate('Login');
       }
     } catch (error) {
-      console.log('Login error:', error);
+      console.log('Reset password error:', error);
       showToast('error', 'Error', 'An unexpected error occurred');
     } finally {
       setLoading(false);
     }
   };
 
-  const toggleShowPassword = () => {
-    if (passwordInputRef.current && passwordFocused) {
-      passwordInputRef.current.focus();
-    }
-    setShowPassword(!showPassword);
-  };
-
   return (
     <LinearGradient colors={['#121212', '#1e1e1e', '#121212']} style={styles.container}>
-      <View style={styles.content
-
-      }>
+      <View style={styles.content}>
         <View style={styles.logoContainer}>
           <Svg width={scale(60)} height={scale(60)} viewBox="0 0 24 24" fill="none">
             <Path
@@ -103,9 +86,10 @@ export default function LoginScreen({ navigation }) {
           </Svg>
         </View>
         <Text style={styles.title}>QRush Code Generator</Text>
-        <Text style={styles.welcome}>Welcome back</Text>
+        <Text style={styles.welcome}>Reset your password</Text>
         <View style={styles.formContainer}>
           <TextInput
+            ref={emailInputRef}
             style={[styles.input, emailFocused && styles.inputFocused]}
             placeholder="Email"
             placeholderTextColor="#b0b0b0"
@@ -117,60 +101,25 @@ export default function LoginScreen({ navigation }) {
             keyboardType="email-address"
             editable={!loading}
           />
-          <View style={styles.inputContainer}>
-            <TextInput
-              ref={passwordInputRef}
-              style={[styles.input, passwordFocused && styles.inputFocused, styles.passwordInput]}
-              placeholder="Password"
-              placeholderTextColor="#b0b0b0"
-              value={password}
-              onChangeText={setPassword}
-              onFocus={() => setPasswordFocused(true)}
-              onBlur={() => setPasswordFocused(false)}
-              secureTextEntry={!showPassword}
-              editable={!loading}
-            />
-            <TouchableOpacity
-              style={styles.eyeIcon}
-              onPress={toggleShowPassword}
-              disabled={loading}
-            >
-              <MaterialCommunityIcons
-                name={showPassword ? 'eye-off' : 'eye'}
-                size={scale(24)}
-                color="#b0b0b0"
-              />
-            </TouchableOpacity>
-          </View>
           <TouchableOpacity
-            style={styles.forgotContainer}
-            onPress={() => navigation.navigate('ForgotPassword')}
-            disabled={loading}
-          >
-            <Text style={styles.forgotText}>Forgot password?</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.loginButton, loading && styles.buttonDisabled]}
-            onPress={handleLogin}
+            style={[styles.resetButton, loading && styles.buttonDisabled]}
+            onPress={handleResetPassword}
             onPressIn={handlePressIn}
             onPressOut={handlePressOut}
             disabled={loading}
             activeOpacity={0.8}
           >
             <Animated.View style={animatedButtonStyle}>
-              <Text style={styles.loginButtonText}>{loading ? 'Logging in...' : 'Log In'}</Text>
+              <Text style={styles.resetButtonText}>{loading ? 'Sending...' : 'Send Reset Link'}</Text>
             </Animated.View>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.signupContainer}
-            onPress={() => navigation.navigate('Register')}
+            style={styles.backContainer}
+            onPress={() => navigation.navigate('Login')}
             disabled={loading}
             activeOpacity={0.7}
           >
-            <Text style={styles.signupText}>
-              <Text style={styles.signupTextGray}>Don't have an account? </Text>
-              <Text style={styles.signupTextLink}>Sign up</Text>
-            </Text>
+            <Text style={styles.backText}>Back to Login</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -210,9 +159,6 @@ const styles = StyleSheet.create({
   formContainer: {
     width: '100%',
   },
-  inputContainer: {
-    position: 'relative',
-  },
   input: {
     height: scale(56),
     backgroundColor: '#3a3a3a',
@@ -237,29 +183,11 @@ const styles = StyleSheet.create({
       },
     }),
   },
-  passwordInput: {
-    paddingRight: scale(48),
-  },
   inputFocused: {
     borderWidth: 2,
     borderColor: '#7ed321',
   },
-  eyeIcon: {
-    position: 'absolute',
-    right: scale(16),
-    top: scale(16),
-  },
-  forgotContainer: {
-    alignSelf: 'flex-end',
-    marginBottom: scale(24),
-    padding: scale(5),
-  },
-  forgotText: {
-    fontSize: scale(14),
-    color: '#b0b0b0',
-    textDecorationLine: 'underline',
-  },
-  loginButton: {
+  resetButton: {
     height: scale(56),
     backgroundColor: '#7ed321',
     borderRadius: scale(28),
@@ -284,24 +212,19 @@ const styles = StyleSheet.create({
   buttonDisabled: {
     opacity: 0.6,
   },
-  loginButtonText: {
+  resetButtonText: {
     fontSize: scale(18),
     fontFamily: 'Inter-Bold',
     color: '#000000',
   },
-  signupContainer: {
+  backContainer: {
     paddingVertical: scale(10),
     paddingHorizontal: scale(20),
     alignItems: 'center',
   },
-  signupText: {
+  backText: {
     textAlign: 'center',
     fontSize: scale(14),
-  },
-  signupTextGray: {
-    color: '#b0b0b0',
-  },
-  signupTextLink: {
     color: '#b0b0b0',
     textDecorationLine: 'underline',
   },

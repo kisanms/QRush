@@ -15,3 +15,4 @@ https://youtu.be/7zjJXJjF-pM?si=BOp2h1HB2RZPOsPP
 
 https://youtu.be/se_S1ZxDof8?si=N-TgcWgh2pSeL9OL
 
+https://chatgpt.com/share/6890269c-a6f8-8000-a9b9-0d9dd000a82b
